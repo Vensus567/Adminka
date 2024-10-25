@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Форма ввода данных</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            display: flex;
+        }
+        #sidebar {
+            width: 200px;
+            background-color: #f4f4f4;
+            padding: 15px;
+            border-right: 1px solid #ddd;
+        }
+        #sidebar a {
+            display: block;
+            padding: 10px;
+            color: #333;
+            text-decoration: none;
+        }
+        #sidebar a:hover {
+            background-color: #ddd;
+        }
+        #content {
+            padding: 15px;
+            flex-grow: 1;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left; /* Устанавливаем выравнивание текста влево */
+        }
+        th {
+            background-color: #f2f2f2;
+            cursor: pointer; /* Указатель при наведении для сортировки */
+        }
+    </style>
+</head>
+<body>
+    <div id="sidebar">
+        <h3>Меню</h3>
+        <a href="{{ url_for('models') }}">База 3D-моделей</a>
+        <a href="{{ url_for('home') }}">Лист продаж</a>
+        <a href="{{ url_for('logout') }}">Выйти</a>
+    </div>
+    <div id="content">
+        <h1>Добро пожаловать на страницу записи</h1>
+
+        <h2>Добавить продукт</h2>
+        <form id="productForm" method="POST">
+            <input type="text" name="new_product" placeholder="Название продукта" required>
+            <input type="submit" value="Добавить продукт">
+        </form>
+
+        <h2>Добавить запись</h2>
+        <form method="POST">
+            <table>
+                <tr>
+                    <td>Название:</td>
+                    <td><input type="text" name="title" required></td>
+                </tr>
+                <tr>
+                    <td>ИНН:</td>
+                    <td><input type="text" name="inn" required></td>
+                </tr>
+                <tr>
+                    <td>Продукт:</td>
+                    <td>
+                        <select name="product" required>
+                            {% for product in products %}
+                            <option value="{{ product }}">{{ product }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Дата:</td>
+                    <td><input type="date" name="date" required></td>
+                </tr>
+                <tr>
+                    <td>Стоимость:</td>
+                    <td><input type="number" name="cost" required></td>
+                </tr>
+            </table>
+            <input type="submit" value="Сохранить">
+        </form>
+
+        <h2>Аналитика</h2>
+        <p>Общее число продаж: {{ total_sales }}</p>
+        <p>Средняя стоимость: {{ average_cost }}</p>
+        <p>Сумма стоимости: {{ total_cost }}</p>
+
+        <h2>Список записей</h2>
+        <table id="recordsTable">
+            <thead>
+                <tr>
+                    <th onclick="sortTable(0)">Название</th>
+                    <th onclick="sortTable(1)">ИНН</th>
+                    <th onclick="sortTable(2)">Продукт</th>
+                    <th onclick="sortTable(3)">Дата</th>
+                    <th onclick="sortTable(4)">Стоимость</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in records %}
+                <tr>
+                    <td>{{ record.title }}</td>
+                    <td>{{ record.inn }}</td>
+                    <td>{{ record.product }}</td>
+                    <td>{{ record.date }}</td>
+                    <td>{{ record.cost }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <button onclick="exportTableToCSV('records.csv')">Выгрузить таблицу</button>
+
+        <script>
+            function sortTable(n) {
+                const table = document.getElementById("recordsTable");
+                let switching = true, dir = "asc", switchcount = 0;
+                while (switching) {
+                    switching = false;
+                    let rows = table.rows;
+                    for (let i = 1; i < (rows.length - 1); i++) {
+                        let shouldSwitch = false;
+                        let x = rows[i].getElementsByTagName("TD")[n];
+                        let y = rows[i + 1].getElementsByTagName("TD")[n];
+                        if (dir === "asc" ? (x.innerHTML > y.innerHTML) : (x.innerHTML < y.innerHTML)) {
+                            shouldSwitch = true;
+                            break;
+                        }
+                    }
+                    if (shouldSwitch) {
+                        rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                        switching = true;
+                        switchcount++;
+                    } else {
+                        if (switchcount === 0 && dir === "asc") {
+                            dir = "desc";
+                            switching = true;
+                        }
+                    }
+                }
+            }
+
+            function exportTableToCSV(filename) {
+                let csv = [];
+                const rows = document.querySelectorAll("#recordsTable tr");
+                for (let i = 0; i < rows.length; i++) {
+                    let row = [];
+                    const cols = rows[i].querySelectorAll("td, th");
+                    for (let j = 0; j < cols.length; j++) {
+                        row.push(cols[j].innerText);
+                    }
+                    csv.push(row.join(","));
+                }
+                const csvFile = new Blob([csv.join("\n")], { type: 'text/csv' });
+                const downloadLink = document.createElement("a");
+                downloadLink.download = filename;
+                downloadLink.href = window.URL.createObjectURL(csvFile);
+                downloadLink.style.display = "none";
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+            }
+        </script>
+    </div>
+</body>
+</html>

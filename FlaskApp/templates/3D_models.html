@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Добавление модели</title>
+    <style>
+        body {
+            display: flex;
+        }
+        #sidebar {
+            width: 200px;
+            background-color: #f4f4f4;
+            padding: 15px;
+            border-right: 1px solid #ddd;
+        }
+        #content {
+            padding: 15px;
+            flex-grow: 1;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed; /* Фиксированная ширина столбцов */
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap; /* Запрет переноса текста */
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        /* Новый стиль для ссылок */
+        .menu-link {
+            display: block;
+            padding: 10px;
+            text-decoration: none;
+            color: #333;
+            border-radius: 4px;
+            margin-bottom: 5px;
+            background-color: #e7e7e7;
+            transition: background-color 0.3s;
+        }
+        .menu-link:hover {
+            background-color: #d4d4d4;
+        }
+    </style>
+</head>
+<body>
+    <div id="sidebar">
+        <h3>Меню</h3>
+        <a class="menu-link" href="{{ url_for('home') }}">Лист продаж</a>
+        <a class="menu-link" href="{{ url_for('models') }}">База 3D-моделей</a>
+    </div>
+    
+    <div id="content">
+        <h1>Добавление 3D модели</h1>
+        
+        <form id="modelForm">
+            <label for="title">Название:</label>
+            <input type="text" id="title" required><br><br>
+            
+            <label for="description">Описание:</label>
+            <textarea id="description" required></textarea><br><br>
+
+            <label for="date">Дата:</label>
+            <input type="date" id="date"><br><br>
+            
+            <label for="devHours">Часы разработки:</label>
+            <input type="number" id="devHours" min="0" placeholder="0"><br><br>
+
+            <label for="imageUpload">Файл изображения:</label>
+            <input type="file" id="imageUpload" accept="image/*" required><br><br>
+
+            <label for="fileUpload">Другой файл:</label>
+            <input type="file" id="fileUpload"><br><br>
+
+            <button type="submit">Добавить модель</button>
+        </form>
+
+        <h2>Аналитика</h2>
+        <p>Число 3D-моделей: <span id="modelsCount">0</span></p>
+        <p>Среднее время разработки: <span id="averageDevHours">0</span> часов</p>
+
+        <table id="modelsTable">
+            <thead>
+                <tr>
+                    <th>Название</th>
+                    <th>Описание</th>
+                    <th>Дата</th>
+                    <th>Часы разработки</th>
+                    <th>Изображение</th>
+                    <th>Другой файл</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Новые записи будут добавлены здесь -->
+            </tbody>
+        </table>
+
+        <script>
+            let totalDevHours = 0;
+
+            document.getElementById('modelForm').addEventListener('submit', function(event) {
+                event.preventDefault();
+
+                const title = document.getElementById('title').value.trim();
+                const description = document.getElementById('description').value.trim();
+                const date = document.getElementById('date').value;
+                const devHours = parseFloat(document.getElementById('devHours').value) || 0;
+                const image = document.getElementById('imageUpload').files[0];
+                const file = document.getElementById('fileUpload').files[0];
+
+                if (title === '' || description === '' || !image) {
+                    alert('Пожалуйста, заполните все обязательные поля и загрузите изображение!');
+                    return;
+                }
+
+                const table = document.getElementById('modelsTable').getElementsByTagName('tbody')[0];
+                const newRow = table.insertRow();
+
+                const imageUrl = URL.createObjectURL(image);
+                const fileUrl = file ? URL.createObjectURL(file) : '#';
+
+                newRow.innerHTML = `
+                    <td>${title}</td>
+                    <td>${description}</td>
+                    <td>${date ? date : 'Не указано'}</td>
+                    <td>${devHours ? devHours : 'Не указано'}</td>
+                    <td><img src="${imageUrl}" alt="${title}" style="width: 50px; height: auto;" /></td>
+                    <td>${file ? `<a href="${fileUrl}" download="${file.name}">${file.name}</a>` : 'Не загружено'}</td>
+                `;
+
+                totalDevHours += devHours;
+
+                // Обновляем аналитику
+                document.getElementById('modelsCount').textContent = table.rows.length;
+                document.getElementById('averageDevHours').textContent = (totalDevHours / table.rows.length).toFixed(2);
+
+                this.reset();
+                alert('Модель успешно добавлена!');
+            });
+        </script>
+    </div>
+</body>
+</html>
