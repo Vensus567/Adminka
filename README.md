@@ -1,0 +1,2 @@
+# Adminka
+admin for startup
